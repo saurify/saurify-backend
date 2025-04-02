@@ -1,0 +1,13 @@
+#go related
+bin/
+*.exe
+*.out
+*.log
+*.test
+*.cache
+
+#dependency dir
+vendor/
+
+#env vars
+.env
