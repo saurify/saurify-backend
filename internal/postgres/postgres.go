@@ -1,4 +1,4 @@
-package db
+package sqldb
 
 import (
 	"context"
@@ -10,10 +10,10 @@ import (
 
 var DB *pgxpool.Pool
 
-func InitDB(dsn string){
-	var err error 
+func InitDB(dsn string) {
+	var err error
 	DB, err = pgxpool.New(context.Background(), dsn)
-	if err!=nil{
+	if err != nil {
 		log.Fatalf("failed to connect to DB")
 	}
 	fmt.Println("Db connected!")
