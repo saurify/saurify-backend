@@ -34,5 +34,5 @@ func main() {
 	app.Get("/:shortCode", handlers.ResolveURL)
 
 	//start server
-	log.Fatal(app.Listen(":8080"))
+	log.Fatal(app.Listen(os.Getenv("PORT")))
 }
