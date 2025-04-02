@@ -35,13 +35,27 @@ func ShortenedURL(c *fiber.Ctx) error {
 }
 
 func ResolveURL(c *fiber.Ctx) error {
-	shortCode := c.Params("shortCode")
+	var request struct {
+		ShortCode string `json:"short_code"`
+	}
 
+	// Try to parse JSON body (for POST requests)
+	if err := c.BodyParser(&request); err != nil {
+		request.ShortCode = c.Params("shortCode") // Fallback to URL param
+	}
+
+	shortCode := request.ShortCode
+	if shortCode == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Short code is required"})
+	}
+
+	// Check Redis cache first
 	originalURL, err := db.GetURLToCache(shortCode)
 	if err == nil && originalURL != "" {
 		return c.Redirect(originalURL, http.StatusFound)
 	}
 
+	// Check SQL database
 	originalURL, isTemporary, err := db.GetURLFromSQL(shortCode)
 	if err != nil {
 		return c.Status(http.StatusNotFound).JSON(fiber.Map{
@@ -49,10 +63,12 @@ func ResolveURL(c *fiber.Ctx) error {
 		})
 	}
 
+	// Save to cache if it's permanent
 	if !isTemporary {
 		go db.SaveURLToCache(shortCode, originalURL)
 	}
 
+	// If temporary, delete from SQL after use
 	if isTemporary {
 		go db.DeleteFromSQL(shortCode)
 	}
